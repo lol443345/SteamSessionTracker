@@ -34,3 +34,8 @@ The workflow in `.github/workflows/build.yml` builds the exe on every push and a
 ## Notes
 - Game names are only known for a few Steam app IDs; others show as "App 1234" until renamed.
 - If Steam closes mid-game, that session is cut off at the last log line before the next Steam launch, so its length is approximate.
+- Will not be maintaining this piece of garbage
+
+## AI Disclosure
+
+Parts of this project, including code, documentation, and/or text, were generated with the help of AI tools (such as Claude). All AI-generated content has been reviewed and edited by me, but it may still contain errors or mistakes.
