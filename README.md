@@ -1,4 +1,7 @@
-# Steam Session Tracker
+<h1 align="center">
+  <img src="icon.png" width="48" height="48" align="absmiddle" alt="icon">
+  Steam Session Tracker
+</h1>
 
 A small Windows app that reads Steam's `streaming_log.txt` and shows your playtime in its own live-updating window: stats, charts (time per game, hours per day, hours of the day you play) and a sortable, filterable session list.
 
@@ -12,7 +15,7 @@ A small Windows app that reads Steam's `streaming_log.txt` and shows your playti
 - Everything stays on your machine
 
 ## Download
-Grab `SteamSessionTracker.exe` from from **Releases** if a version tag was pushed.
+Grab `SteamSessionTracker.exe` from the **Releases** page. See `CHANGELOG.md` for what's new in each version.
 Windows SmartScreen may warn about the unsigned exe. Choose "More info → Run anyway".
 
 ## Build it yourself
@@ -22,11 +25,13 @@ Requires Python 3.9+ on Windows (and the Edge WebView2 runtime, already on most 
 
 The exe ends up in `dist\`.
 
-
 ## Files
 - `tracker.py`: finds/merges the logs and opens the window (pywebview)
 - `template.html`: the dashboard (Chart.js loaded from cdnjs)
+- `icon.ico`: the exe/window icon
+- `icon.png`: the same icon, used in this README
 - `build.bat`: local PyInstaller build
+- `CHANGELOG.md`: version history
 
 ## Notes
 - Game names are only known for a few Steam app IDs; others show as "App 1234" until renamed.
