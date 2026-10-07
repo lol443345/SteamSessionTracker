@@ -1,0 +1,36 @@
+# Steam Session Tracker
+
+A small Windows app that reads Steam's `streaming_log.txt` and shows your playtime in its own live-updating window: stats, charts (time per game, hours per day, hours of the day you play) and a sortable, filterable session list.
+
+## Features
+- Finds your Steam folder automatically (registry, falling back to `C:\Program Files (x86)\Steam`)
+- Live updates every few seconds, with a "Playing now" card
+- **Permanent history:** Steam wipes `streaming_log.txt` on big updates, so each launch (and each change while open) merges the log into `%LOCALAPPDATA%\SteamSessionTracker\streaming_log_archive.txt`. Nothing is ever deleted from the archive.
+- Rename games (click a name in the Games table); names are saved in `names.json` next to the archive
+- Everything stays on your machine
+
+## Download
+Grab `SteamSessionTracker.exe` from the **Actions** tab (latest run → Artifacts) or from **Releases** if a version tag was pushed.
+Windows SmartScreen may warn about the unsigned exe. Choose "More info → Run anyway".
+
+## Build it yourself
+Requires Python 3.9+ on Windows (and the Edge WebView2 runtime, already on most Windows 10/11 installs).
+
+    build.bat
+
+The exe ends up in `dist\`.
+
+## Releasing a version
+    git tag v1.0.0
+    git push origin v1.0.0
+
+The workflow in `.github/workflows/build.yml` builds the exe on every push and attaches it to the release for `v*` tags.
+
+## Files
+- `tracker.py`: finds/merges the logs and opens the window (pywebview)
+- `template.html`: the dashboard (Chart.js loaded from cdnjs)
+- `build.bat`: local PyInstaller build
+
+## Notes
+- Game names are only known for a few Steam app IDs; others show as "App 1234" until renamed.
+- If Steam closes mid-game, that session is cut off at the last log line before the next Steam launch, so its length is approximate.

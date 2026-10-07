@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Steam Session Tracker</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#f3f4f8;--card:#fff;--tx:#161a26;--mu:#6b7287;--bd:#e2e5ee;--ac:#5b6cff}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0d0f17;--card:#171a26;--tx:#eceef7;--mu:#8b92a8;--bd:#262b3d;--ac:#7c8bff}}
+:root[data-theme="dark"]{--bg:#0d0f17;--card:#171a26;--tx:#eceef7;--mu:#8b92a8;--bd:#262b3d;--ac:#7c8bff}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 Inter,system-ui,sans-serif;padding:20px}
+.w{max-width:1100px;margin:auto}
+h1{margin:0 0 4px;font-size:28px;background:linear-gradient(90deg,var(--ac),#ff6bd6);-webkit-background-clip:text;background-clip:text;color:transparent}
+p.s{color:var(--mu);margin:0 0 18px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:18px;margin-bottom:16px}
+#drop{border:2px dashed var(--bd);text-align:center;padding:26px;cursor:pointer;transition:.2s}
+#drop.o,#drop:hover{border-color:var(--ac);background:color-mix(in srgb,var(--ac) 8%,var(--card))}
+textarea{width:100%;height:70px;background:var(--bg);color:var(--tx);border:1px solid var(--bd);border-radius:10px;padding:8px;font:12px monospace;margin-top:10px}
+button,select,input{background:var(--ac);color:#fff;border:0;border-radius:10px;padding:8px 14px;font:inherit;cursor:pointer}
+select,input[type=text]{background:var(--bg);color:var(--tx);border:1px solid var(--bd)}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:10px;color:var(--mu)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:16px}
+.stat{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:16px}
+.stat b{display:block;font-size:26px;margin-top:2px}.stat span{color:var(--mu);font-size:13px}
+.g{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:16px}
+.g .card{margin:0}h3{margin:0 0 10px;font-size:15px;color:var(--mu);font-weight:600}
+.ch{position:relative;height:280px}
+.tw{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--bd);white-space:nowrap}th{color:var(--mu);font-weight:600}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:8px}
+.bar{height:6px;border-radius:3px;background:var(--bd);min-width:80px}.bar i{display:block;height:100%;border-radius:3px}
+#res{display:none}.fh{display:flex;justify-content:space-between;align-items:center;position:relative;margin-bottom:6px}.fh h3{margin:0}
+#fb{background:transparent;color:var(--mu);border:1px solid var(--bd);padding:6px 8px;line-height:0}#fb:hover,#fb.on{color:var(--ac);border-color:var(--ac)}
+#fp{position:absolute;right:0;top:38px;z-index:5;background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:8px;min-width:210px;max-height:260px;overflow:auto;box-shadow:0 8px 24px rgba(0,0,0,.35)}#fp[hidden]{display:none}
+#fp label{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;cursor:pointer;white-space:nowrap}#fp label:hover{background:var(--bg)}
+#fp input{padding:0;background:none;accent-color:var(--ac);width:15px;height:15px;margin:0}#fp .dot{margin:0}
+th.sort{cursor:pointer;user-select:none}th.sort:hover{color:var(--tx)}.arr{display:inline-block;width:14px;margin-left:4px;font-size:10px;color:var(--ac)}.live #ta,.live #hint{display:none}.live #drop{padding:12px;cursor:default;border-style:solid}
+</style></head><body><div class="w">
+<h1>🎮 Steam Session Tracker</h1>
+<p class="s">Updates automatically every few seconds while Steam runs. Everything runs locally in your browser.</p>
+<div class="card" id="drop"><span id="hint">📂 Click or drop a log file here</span>
+<input type="file" id="f" accept=".txt,.log" hidden>
+<textarea id="ta" placeholder="…or paste log text here" onclick="event.stopPropagation()"></textarea>
+<div class="row" onclick="event.stopPropagation()">
+<label>Ignore sessions shorter than <select id="min" onchange="go()"><option value="0">0 s</option><option value="60" selected>1 min</option><option value="300">5 min</option></select></label>
+<button onclick="go()">Analyze</button></div></div>
+<div id="res">
+<div class="stats" id="stats"></div>
+<div class="g">
+<div class="card"><h3>Time per game</h3><div class="ch"><canvas id="c1"></canvas></div></div>
+<div class="card"><h3>Hours per day</h3><div class="ch"><canvas id="c2"></canvas></div></div>
+<div class="card"><h3>When you play (hour of day)</h3><div class="ch"><canvas id="c3"></canvas></div></div>
+<div class="card"><h3>Games</h3><div class="tw" id="gt"></div></div>
+</div>
+<div class="card" style="margin-top:16px"><div class="fh"><h3>Sessions</h3><button id="fb" title="Filter games"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h18l-7 8.5V19l-4 2v-8.5L3 4z"/></svg></button><div id="fp" hidden></div></div><div class="tw" id="st"></div></div>
+</div></div>
+<script>
+const LIVE=/*__LIVE__*/false;
+const PAL=['#7c8bff','#ff6bd6','#35d0ba','#ffb84d','#ff6b6b','#8ce05c','#4db8ff','#c084fc'];
+const KNOWN={730:'Counter-Strike 2',244210:'Assetto Corsa',227300:'Euro Truck Simulator 2',1172470:'Apex Legends'};
+let names={};try{names=JSON.parse(localStorage.getItem('n')||'{}')}catch(e){}
+const nm=id=>names[id]||KNOWN[id]||'App '+id;
+const fmt=s=>{s=Math.round(s);const h=Math.floor(s/3600),m=Math.floor(s%3600/60);return h?h+'h '+m+'m':m?m+'m':s+'s'};
+const pad=n=>String(n).padStart(2,'0');
+let charts=[],last='',SS=[],COL={},sk='s',sd=-1,hide=new Set(),fkey='';
+const kv={g:x=>nm(x.id).toLowerCase(),s:x=>+x.s,e:x=>+x.e,d:x=>x.e-x.s};
+function srt(k){if(sk===k)sd=-sd;else{sk=k;sd=k==='g'?1:-1}tbl()}
+function tbl(){
+ const rows=SS.filter(x=>!hide.has(x.id)).sort((a,b)=>{const A=kv[sk](a),B=kv[sk](b);return(A>B?1:A<B?-1:0)*sd||b.s-a.s});
+ const th=(k,l)=>`<th class="sort" onclick="srt('${k}')">${l}<span class="arr">${sk===k?(sd>0?'▲':'▼'):''}</span></th>`;
+ document.getElementById('st').innerHTML='<table><tr>'+th('g','Game')+th('s','Start')+th('e','End')+th('d','Duration')+'</tr>'+rows.map(x=>`<tr><td><span class="dot" style="background:${COL[x.id]}"></span>${nm(x.id)}</td><td>${x.s.toLocaleString([], {dateStyle:'medium',timeStyle:'short'})}</td><td>${x.open?(LIVE?'now':'(log ended)'):x.e.toLocaleTimeString([], {timeStyle:'short'})}</td><td>${fmt((x.e-x.s)/1e3)}</td></tr>`).join('')+'</table>';
+ document.getElementById('fb').classList.toggle('on',hide.size>0)}
+function fpop(ids){const k=ids.join();if(k===fkey)return;fkey=k;document.getElementById('fp').innerHTML=ids.map(i=>`<label><input type="checkbox" ${hide.has(i)?'':'checked'} onchange="tg('${i}')"><span class="dot" style="background:${COL[i]}"></span>${nm(i)}</label>`).join('')}
+function tg(i){hide.has(i)?hide.delete(i):hide.add(i);tbl()}
+function parse(t){
+ const re=/^\[(\d{4})-(\d\d)-(\d\d) (\d\d):(\d\d):(\d\d)\](?:\[[\d.]+\])? Game Recording - (?:would start recording game (\d+)|game stopped \[gameid=(\d+)\])/;
+ const cv=/^\[\d{4}-\d\d-\d\d \d\d:\d\d:\d\d\] Client version/;const open={},out=[];let end=null;
+ for(const l of t.split(/\r?\n/)){if(cv.test(l)){for(const id in open){out.push({id,s:open[id],e:end});delete open[id]}continue}const m=re.exec(l);if(!m)continue;
+  const d=new Date(+m[1],m[2]-1,+m[3],+m[4],+m[5],+m[6]);end=d;
+  if(m[7]){if(!open[m[7]])open[m[7]]=d}
+  else if(open[m[8]]){out.push({id:m[8],s:open[m[8]],e:d});delete open[m[8]]}}
+ for(const id in open)out.push({id,s:open[id],e:LIVE?new Date():end,open:true});
+ return out.sort((a,b)=>a.s-b.s);}
+function go(){
+ const t=document.getElementById('ta').value;if(!t.trim())return;last=t;
+ const min=+document.getElementById('min').value;
+ const ss=parse(t).filter(x=>(x.e-x.s)/1e3>=min);
+ if(!ss.length){if(!LIVE)alert('No sessions found in that log.');return}
+ render(ss)}
+function render(ss){
+ document.getElementById('res').style.display='block';
+ const tot={},cnt={},days={},hrs=Array(24).fill(0);let all=0,longest=ss[0];
+ ss.forEach(x=>{const d=(x.e-x.s)/1e3;all+=d;tot[x.id]=(tot[x.id]||0)+d;cnt[x.id]=(cnt[x.id]||0)+1;if(d>(longest.e-longest.s)/1e3)longest=x;
+  let c=x.s.getTime();const E=x.e.getTime();
+  while(c<E){const n=new Date(c);const nx=new Date(n.getFullYear(),n.getMonth(),n.getDate(),n.getHours()+1).getTime();const seg=(Math.min(nx,E)-c)/1e3;
+   const k=n.getFullYear()+'-'+pad(n.getMonth()+1)+'-'+pad(n.getDate());(days[k]=days[k]||{})[x.id]=((days[k]||{})[x.id]||0)+seg;hrs[n.getHours()]+=seg;c=Math.min(nx,E)}});
+ const now=LIVE&&ss.find(x=>x.open);const ids=Object.keys(tot).sort((a,b)=>tot[b]-tot[a]);
+ const col={};ids.forEach((id,i)=>col[id]=PAL[i%PAL.length]);
+ const dk=Object.keys(days).sort();
+ document.getElementById('stats').innerHTML=[
+  ['Total playtime',fmt(all)],['Sessions',ss.length],['Avg session',fmt(all/ss.length)],
+  ['Longest session',fmt((longest.e-longest.s)/1e3)+' · '+nm(longest.id)],[now?'🟢 Playing now':'Most played',now?nm(now.id):nm(ids[0])],['Days played',dk.length]]
+  .map(a=>`<div class="stat"><span>${a[0]}</span><b>${a[1]}</b></div>`).join('');
+ const cs=getComputedStyle(document.documentElement);const tc=cs.getPropertyValue('--mu').trim(),gc=cs.getPropertyValue('--bd').trim();
+ if(LIVE)Chart.defaults.animation=false;Chart.defaults.color=tc;Chart.defaults.borderColor=gc;charts.forEach(c=>c.destroy());
+ const ax={grid:{color:gc}};
+ charts=[
+ new Chart(c1,{type:'doughnut',data:{labels:ids.map(nm),datasets:[{data:ids.map(i=>+(tot[i]/3600).toFixed(2)),backgroundColor:ids.map(i=>col[i]),borderWidth:0}]},options:{maintainAspectRatio:false,cutout:'65%',plugins:{tooltip:{callbacks:{label:c=>c.label+': '+fmt(c.raw*3600)}}}}}),
+ new Chart(c2,{type:'bar',data:{labels:dk.map(k=>k.slice(5)),datasets:ids.map(i=>({label:nm(i),data:dk.map(k=>+((days[k][i]||0)/3600).toFixed(2)),backgroundColor:col[i],borderRadius:4}))},options:{maintainAspectRatio:false,scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,...ax,title:{display:true,text:'hours'}}}}}),
+ new Chart(c3,{type:'bar',data:{labels:hrs.map((_,i)=>pad(i)),datasets:[{label:'hours',data:hrs.map(h=>+(h/3600).toFixed(2)),backgroundColor:'#7c8bff',borderRadius:4}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:ax}}})];
+ const mx=tot[ids[0]];
+ document.getElementById('gt').innerHTML='<table><tr><th>Game</th><th>Time</th><th>Sessions</th><th></th></tr>'+ids.map(i=>`<tr><td><span class="dot" style="background:${col[i]}"></span><a href="#" style="color:var(--tx)" onclick="ren('${i}');return false">${nm(i)}</a></td><td>${fmt(tot[i])}</td><td>${cnt[i]}</td><td><div class="bar"><i style="width:${tot[i]/mx*100}%;background:${col[i]}"></i></div></td></tr>`).join('')+'</table>';
+ SS=ss;COL=col;fpop(ids);tbl()}
+function ren(id){const n=prompt('Name for app '+id+':',nm(id));if(n){fkey='';names[id]=n;try{localStorage.setItem('n',JSON.stringify(names))}catch(e){}if(LIVE)pywebview.api.set_names(names);go()}}
+let seen='';
+async function poll(){try{const t=await pywebview.api.get_log();if(t!==seen||parse(t).some(x=>x.open)){seen=t;document.getElementById('ta').value=t;go()}}catch(e){}}
+if(LIVE){document.body.classList.add('live');window.addEventListener('pywebviewready',async()=>{try{names=await pywebview.api.get_names()}catch(e){}poll();setInterval(poll,5000)})}
+const fb=document.getElementById('fb'),fp=document.getElementById('fp');
+fb.onclick=e=>{e.stopPropagation();fp.hidden=!fp.hidden};
+document.addEventListener('click',e=>{if(!fp.contains(e.target))fp.hidden=true});
+const drop=document.getElementById('drop'),fi=document.getElementById('f');
+function rd(file){const r=new FileReader();r.onload=()=>{document.getElementById('ta').value=r.result;go()};r.readAsText(file)}
+drop.onclick=()=>!LIVE&&fi.click();fi.onchange=()=>fi.files[0]&&rd(fi.files[0]);
+drop.ondragover=e=>{e.preventDefault();drop.classList.add('o')};drop.ondragleave=()=>drop.classList.remove('o');
+drop.ondrop=e=>{e.preventDefault();drop.classList.remove('o');e.dataTransfer.files[0]&&rd(e.dataTransfer.files[0])};
+</script></body></html>
