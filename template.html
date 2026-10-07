@@ -32,10 +32,10 @@ th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--bd);white-s
 #res{display:none}.g>.card:last-child{grid-column:1/-1}
 @media(min-width:720px){.g{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(min-width:1092px){.g{grid-template-columns:repeat(3,minmax(0,1fr))}.stats{grid-template-columns:repeat(6,minmax(0,1fr))}}.fh{display:flex;justify-content:space-between;align-items:center;position:relative;margin-bottom:6px}.fh h3{margin:0}
-#fb{background:transparent;color:var(--mu);border:1px solid var(--bd);padding:6px 8px;line-height:0}#fb:hover,#fb.on{color:var(--ac);border-color:var(--ac)}
-#fp{position:absolute;right:0;top:38px;z-index:5;background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:8px;min-width:210px;max-height:260px;overflow:auto;box-shadow:0 8px 24px rgba(0,0,0,.35)}#fp[hidden]{display:none}
-#fp label{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;cursor:pointer;white-space:nowrap}#fp label:hover{background:var(--bg)}
-#fp input{padding:0;background:none;accent-color:var(--ac);width:15px;height:15px;margin:0}#fp .dot{margin:0}
+#fb,#gfb{background:transparent;color:var(--mu);border:1px solid var(--bd);padding:6px 8px;line-height:0}#fb:hover,#fb.on,#gfb:hover,#gfb.on{color:var(--ac);border-color:var(--ac)}
+#fp,#gfp{position:absolute;right:0;top:38px;z-index:5;background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:8px;min-width:210px;max-height:260px;overflow:auto;box-shadow:0 8px 24px rgba(0,0,0,.35)}#fp[hidden],#gfp[hidden]{display:none}
+#fp label,#gfp label{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;cursor:pointer;white-space:nowrap}#fp label:hover,#gfp label:hover{background:var(--bg)}
+#fp input,#gfp input{padding:0;background:none;accent-color:var(--ac);width:15px;height:15px;margin:0}#fp .dot,#gfp .dot{margin:0}
 th.sort{cursor:pointer;user-select:none}th.sort:hover{color:var(--tx)}.arr{display:inline-block;width:14px;margin-left:4px;font-size:10px;color:var(--ac)}.live #ta,.live #hint{display:none}.live #drop{padding:12px;cursor:default;border-style:solid}
 </style></head><body><div class="w">
 <h1>🎮 Steam Session Tracker</h1>
@@ -52,7 +52,7 @@ th.sort{cursor:pointer;user-select:none}th.sort:hover{color:var(--tx)}.arr{displ
 <div class="card"><h3>Time per game</h3><div class="ch"><canvas id="c1"></canvas></div></div>
 <div class="card"><h3>Hours per day</h3><div class="ch"><canvas id="c2"></canvas></div></div>
 <div class="card"><h3>When you play (hour of day)</h3><div class="ch"><canvas id="c3"></canvas></div></div>
-<div class="card"><h3>Games</h3><div class="tw" id="gt"></div></div>
+<div class="card"><div class="fh"><h3>Games</h3><button id="gfb" title="Filter games"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h18l-7 8.5V19l-4 2v-8.5L3 4z"/></svg></button><div id="gfp" hidden></div></div><div class="tw" id="gt"></div></div>
 </div>
 <div class="card" style="margin-top:16px"><div class="fh"><h3>Sessions</h3><button id="fb" title="Filter games"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h18l-7 8.5V19l-4 2v-8.5L3 4z"/></svg></button><div id="fp" hidden></div></div><div class="tw" id="st"></div></div>
 </div></div>
@@ -74,6 +74,17 @@ function tbl(){
  document.getElementById('fb').classList.toggle('on',hide.size>0)}
 function fpop(ids){const k=ids.join();if(k===fkey)return;fkey=k;document.getElementById('fp').innerHTML=ids.map(i=>`<label><input type="checkbox" ${hide.has(i)?'':'checked'} onchange="tg('${i}')"><span class="dot" style="background:${COL[i]}"></span>${nm(i)}</label>`).join('')}
 function tg(i){hide.has(i)?hide.delete(i):hide.add(i);tbl()}
+let GD={ids:[],tot:{},cnt:{},mx:1},gk='t',gd=-1,ghide=new Set(),gkey='';
+const gv={g:i=>nm(i).toLowerCase(),t:i=>GD.tot[i],c:i=>GD.cnt[i]};
+function gsrt(k){if(gk===k)gd=-gd;else{gk=k;gd=k==='g'?1:-1}gtbl()}
+function gtbl(){
+ const rows=GD.ids.filter(i=>!ghide.has(i)).sort((a,b)=>{const A=gv[gk](a),B=gv[gk](b);return(A>B?1:A<B?-1:0)*gd||GD.tot[b]-GD.tot[a]});
+ const th=(k,l)=>`<th class="sort" onclick="gsrt('${k}')">${l}<span class="arr">${gk===k?(gd>0?'▲':'▼'):''}</span></th>`;
+ document.getElementById('gt').innerHTML='<table><tr>'+th('g','Game')+th('t','Time')+th('c','Sessions')+'<th></th></tr>'+rows.map(i=>`<tr><td><span class="dot" style="background:${COL[i]}"></span><a href="#" style="color:var(--tx)" onclick="ren('${i}');return false">${nm(i)}</a></td><td>${fmt(GD.tot[i])}</td><td>${GD.cnt[i]}</td><td><div class="bar"><i style="width:${GD.tot[i]/GD.mx*100}%;background:${COL[i]}"></i></div></td></tr>`).join('')+'</table>';
+ document.getElementById('gfb').classList.toggle('on',ghide.size>0)}
+function gpop(){const k=GD.ids.join();if(k!==gkey){gkey=k;document.getElementById('gfp').innerHTML=GD.ids.map(i=>`<label><input type="checkbox" data-id="${i}" onchange="gtg('${i}')"><span class="dot" style="background:${COL[i]}"></span>${nm(i)}</label>`).join('')}
+ document.querySelectorAll('#gfp input').forEach(e=>e.checked=!ghide.has(e.dataset.id))}
+function gtg(i){ghide.has(i)?ghide.delete(i):ghide.add(i);render(ALL)}
 function parse(t){
  const re=/^\[(\d{4})-(\d\d)-(\d\d) (\d\d):(\d\d):(\d\d)\](?:\[[\d.]+\])? Game Recording - (?:would start recording game (\d+)|game stopped \[gameid=(\d+)\])/;
  const cv=/^\[\d{4}-\d\d-\d\d \d\d:\d\d:\d\d\] Client version/;const open={},out=[];let end=null;
@@ -89,37 +100,56 @@ function go(){
  const ss=parse(t).filter(x=>(x.e-x.s)/1e3>=min);
  if(!ss.length){if(!LIVE)alert('No sessions found in that log.');return}
  render(ss)}
+let ALL=[],ORDER=[],CH={},TOT={};
 function render(ss){
+ ALL=ss;TOT={};
  document.getElementById('res').style.display='block';
- const tot={},cnt={},days={},hrs=Array(24).fill(0);let all=0,longest=ss[0];
- ss.forEach(x=>{const d=(x.e-x.s)/1e3;all+=d;tot[x.id]=(tot[x.id]||0)+d;cnt[x.id]=(cnt[x.id]||0)+1;if(d>(longest.e-longest.s)/1e3)longest=x;
+ const tot=TOT,cnt={},days={},hrs=Array(24).fill(0),dset=new Set(),vt={};
+ let all=0,longest=null,nv=0;
+ ss.forEach(x=>{const d=(x.e-x.s)/1e3,v=!ghide.has(x.id);
+  tot[x.id]=(tot[x.id]||0)+d;cnt[x.id]=(cnt[x.id]||0)+1;
+  if(v){nv++;all+=d;vt[x.id]=(vt[x.id]||0)+d;if(!longest||d>(longest.e-longest.s)/1e3)longest=x}
   let c=x.s.getTime();const E=x.e.getTime();
   while(c<E){const n=new Date(c);const nx=new Date(n.getFullYear(),n.getMonth(),n.getDate(),n.getHours()+1).getTime();const seg=(Math.min(nx,E)-c)/1e3;
-   const k=n.getFullYear()+'-'+pad(n.getMonth()+1)+'-'+pad(n.getDate());(days[k]=days[k]||{})[x.id]=((days[k]||{})[x.id]||0)+seg;hrs[n.getHours()]+=seg;c=Math.min(nx,E)}});
- const now=LIVE&&ss.find(x=>x.open);const ids=Object.keys(tot).sort((a,b)=>tot[b]-tot[a]);
- const col={};ids.forEach((id,i)=>col[id]=PAL[i%PAL.length]);
+   const k=n.getFullYear()+'-'+pad(n.getMonth()+1)+'-'+pad(n.getDate());(days[k]=days[k]||{})[x.id]=((days[k]||{})[x.id]||0)+seg;
+   if(v){hrs[n.getHours()]+=seg;dset.add(k)}c=Math.min(nx,E)}});
+ const ids=Object.keys(tot).sort((a,b)=>tot[b]-tot[a]);
+ ids.forEach(i=>{if(!ORDER.includes(i))ORDER.push(i)});
+ const col={};ORDER.forEach((id,i)=>col[id]=PAL[i%PAL.length]);
  const dk=Object.keys(days).sort();
+ const now=LIVE&&ss.find(x=>x.open&&!ghide.has(x.id));
+ const top=Object.keys(vt).sort((a,b)=>vt[b]-vt[a])[0],D='—';
  document.getElementById('stats').innerHTML=[
-  ['Total playtime',fmt(all)],['Sessions',ss.length],['Avg session',fmt(all/ss.length)],
-  ['Longest session',fmt((longest.e-longest.s)/1e3)+' · '+nm(longest.id)],[now?'🟢 Playing now':'Most played',now?nm(now.id):nm(ids[0])],['Days played',dk.length]]
+  ['Total playtime',nv?fmt(all):D],['Sessions',nv],['Avg session',nv?fmt(all/nv):D],
+  ['Longest session',longest?fmt((longest.e-longest.s)/1e3)+' · '+nm(longest.id):D],
+  [now?'🟢 Playing now':'Most played',now?nm(now.id):top?nm(top):D],['Days played',dset.size]]
   .map(a=>`<div class="stat"><span>${a[0]}</span><b>${a[1]}</b></div>`).join('');
- const cs=getComputedStyle(document.documentElement);const tc=cs.getPropertyValue('--mu').trim(),gc=cs.getPropertyValue('--bd').trim();
- if(LIVE)Chart.defaults.animation=false;Chart.defaults.color=tc;Chart.defaults.borderColor=gc;charts.forEach(c=>c.destroy());
- const ax={grid:{color:gc}};
- charts=[
- new Chart(c1,{type:'doughnut',data:{labels:ids.map(nm),datasets:[{data:ids.map(i=>+(tot[i]/3600).toFixed(2)),backgroundColor:ids.map(i=>col[i]),borderWidth:0}]},options:{maintainAspectRatio:false,cutout:'65%',plugins:{tooltip:{callbacks:{label:c=>c.label+': '+fmt(c.raw*3600)}}}}}),
- new Chart(c2,{type:'bar',data:{labels:dk.map(k=>k.slice(5)),datasets:ids.map(i=>({label:nm(i),data:dk.map(k=>+((days[k][i]||0)/3600).toFixed(2)),backgroundColor:col[i],borderRadius:4}))},options:{maintainAspectRatio:false,scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,...ax,title:{display:true,text:'hours'}}}}}),
- new Chart(c3,{type:'bar',data:{labels:hrs.map((_,i)=>pad(i)),datasets:[{label:'hours',data:hrs.map(h=>+(h/3600).toFixed(2)),backgroundColor:'#7c8bff',borderRadius:4}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:ax}}})];
- const mx=tot[ids[0]];
- document.getElementById('gt').innerHTML='<table><tr><th>Game</th><th>Time</th><th>Sessions</th><th></th></tr>'+ids.map(i=>`<tr><td><span class="dot" style="background:${col[i]}"></span><a href="#" style="color:var(--tx)" onclick="ren('${i}');return false">${nm(i)}</a></td><td>${fmt(tot[i])}</td><td>${cnt[i]}</td><td><div class="bar"><i style="width:${tot[i]/mx*100}%;background:${col[i]}"></i></div></td></tr>`).join('')+'</table>';
- SS=ss;COL=col;fpop(ids);tbl()}
-function ren(id){const n=prompt('Name for app '+id+':',nm(id));if(n){fkey='';names[id]=n;try{localStorage.setItem('n',JSON.stringify(names))}catch(e){}if(LIVE)pywebview.api.set_names(names);go()}}
+ if(!CH.c1){
+  const cs=getComputedStyle(document.documentElement),gc=cs.getPropertyValue('--bd').trim(),ax={grid:{color:gc}};
+  Chart.defaults.color=cs.getPropertyValue('--mu').trim();Chart.defaults.borderColor=gc;
+  Chart.defaults.animation.duration=650;Chart.defaults.animation.easing='easeInOutCubic';
+  CH.c1=new Chart(c1,{type:'doughnut',data:{labels:[],datasets:[{data:[],backgroundColor:[],borderWidth:0}]},options:{maintainAspectRatio:false,cutout:'65%',plugins:{legend:{onClick:(e,it)=>gtg(ORDER[it.index]),labels:{filter:it=>ORDER[it.index] in TOT}},tooltip:{callbacks:{label:c=>c.label+': '+fmt(c.raw*3600)}}}}});
+  CH.c2=new Chart(c2,{type:'bar',data:{labels:[],datasets:[]},options:{maintainAspectRatio:false,plugins:{legend:{onClick:(e,it)=>gtg(ORDER[it.datasetIndex]),labels:{filter:it=>ORDER[it.datasetIndex] in TOT}}},scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,...ax,title:{display:true,text:'hours'}}}}});
+  CH.c3=new Chart(c3,{type:'bar',data:{labels:hrs.map((_,i)=>pad(i)),datasets:[{label:'hours',data:Array(24).fill(0),backgroundColor:'#7c8bff',borderRadius:4}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:ax}}});
+ }
+ const hv=id=>ghide.has(id)||!(id in tot);
+ const d1=CH.c1.data;d1.labels=ORDER.map(nm);d1.datasets[0].data=ORDER.map(i=>+((tot[i]||0)/3600).toFixed(2));d1.datasets[0].backgroundColor=ORDER.map(i=>col[i]);
+ ORDER.forEach((i,k)=>{if(CH.c1.getDataVisibility(k)===hv(i))CH.c1.toggleDataVisibility(k)});
+ const d2=CH.c2.data;d2.labels=dk.map(k=>k.slice(5));
+ ORDER.forEach((i,k)=>{const d={label:nm(i),data:dk.map(q=>+(((days[q]||{})[i]||0)/3600).toFixed(2)),backgroundColor:col[i],borderRadius:4};
+  if(d2.datasets[k])Object.assign(d2.datasets[k],d);else d2.datasets.push(d)});
+ ORDER.forEach((i,k)=>CH.c2.setDatasetVisibility(k,!hv(i)));
+ CH.c3.data.datasets[0].data=hrs.map(h=>+(h/3600).toFixed(2));
+ CH.c1.update();CH.c2.update();CH.c3.update();
+ COL=col;GD={ids,tot,cnt,mx:tot[ids[0]]};gpop();gtbl();
+ SS=ss;fpop(ids);tbl()}
+function ren(id){const n=prompt('Name for app '+id+':',nm(id));if(n){fkey='';gkey='';names[id]=n;try{localStorage.setItem('n',JSON.stringify(names))}catch(e){}if(LIVE)pywebview.api.set_names(names);go()}}
 let seen='';
 async function poll(){try{const t=await pywebview.api.get_log();if(t!==seen||parse(t).some(x=>x.open)){seen=t;document.getElementById('ta').value=t;go()}}catch(e){}}
 if(LIVE){document.body.classList.add('live');window.addEventListener('pywebviewready',async()=>{try{names=await pywebview.api.get_names()}catch(e){}poll();setInterval(poll,5000)})}
-const fb=document.getElementById('fb'),fp=document.getElementById('fp');
-fb.onclick=e=>{e.stopPropagation();fp.hidden=!fp.hidden};
-document.addEventListener('click',e=>{if(!fp.contains(e.target))fp.hidden=true});
+const pops=[['fb','fp'],['gfb','gfp']].map(([b,p])=>[document.getElementById(b),document.getElementById(p)]);
+pops.forEach(([b,p])=>b.onclick=e=>{e.stopPropagation();const h=p.hidden;pops.forEach(x=>x[1].hidden=true);p.hidden=!h});
+document.addEventListener('click',e=>pops.forEach(([b,p])=>{if(!p.contains(e.target))p.hidden=true}));
 const drop=document.getElementById('drop'),fi=document.getElementById('f');
 function rd(file){const r=new FileReader();r.onload=()=>{document.getElementById('ta').value=r.result;go()};r.readAsText(file)}
 drop.onclick=()=>!LIVE&&fi.click();fi.onchange=()=>fi.files[0]&&rd(fi.files[0]);
