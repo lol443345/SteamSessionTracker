@@ -20,11 +20,6 @@ Requires Python 3.9+ on Windows (and the Edge WebView2 runtime, already on most 
 
 The exe ends up in `dist\`.
 
-## Releasing a version
-    git tag v1.0.0
-    git push origin v1.0.0
-
-The workflow in `.github/workflows/build.yml` builds the exe on every push and attaches it to the release for `v*` tags.
 
 ## Files
 - `tracker.py`: finds/merges the logs and opens the window (pywebview)
