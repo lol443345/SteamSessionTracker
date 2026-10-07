@@ -5,7 +5,7 @@ A small Windows app that reads Steam's `streaming_log.txt` and shows your playti
 ## Features
 - Finds your Steam folder automatically (registry, falling back to `C:\Program Files (x86)\Steam`)
 - Live updates every few seconds, with a "Playing now" card
-- **Permanent history:** Steam wipes `streaming_log.txt` on big updates, so each launch (and each change while open) merges the log into `%LOCALAPPDATA%\SteamSessionTracker\streaming_log_archive.txt`. Nothing is ever deleted from the archive.
+- Permanent history: Steam wipes `streaming_log.txt` on big updates, so each launch (and each change while open) merges the log into `%LOCALAPPDATA%\SteamSessionTracker\streaming_log_archive.txt`. Nothing is ever deleted from the archive.
 - Rename games (click a name in the Games table); names are saved in `names.json` next to the archive
 - Everything stays on your machine
 
