@@ -10,7 +10,7 @@ A small Windows app that reads Steam's `streaming_log.txt` and shows your playti
 - Everything stays on your machine
 
 ## Download
-Grab `SteamSessionTracker.exe` from the **Actions** tab (latest run → Artifacts) or from **Releases** if a version tag was pushed.
+Grab `SteamSessionTracker.exe` from from **Releases** if a version tag was pushed.
 Windows SmartScreen may warn about the unsigned exe. Choose "More info → Run anyway".
 
 ## Build it yourself
