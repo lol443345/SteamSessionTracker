@@ -2,6 +2,8 @@
 
 A small Windows app that reads Steam's `streaming_log.txt` and shows your playtime in its own live-updating window: stats, charts (time per game, hours per day, hours of the day you play) and a sortable, filterable session list.
 
+<img width="1143" height="756" alt="image" src="https://github.com/user-attachments/assets/1dcced7e-6940-452e-9e5b-33174fad6305" />
+
 ## Features
 - Finds your Steam folder automatically (registry, falling back to `C:\Program Files (x86)\Steam`)
 - Live updates every few seconds, with a "Playing now" card
